@@ -1,12 +1,28 @@
 /*
-    FirmChecker1
+    FarmChecker1
  */
 
 #include <WiFi.h>
-#include "config.h"
+#include "private_config.h"
+#include <Wire.h>
+#include <stdio.h>
+#include "lib/SparkFunBME280.h"
+
+BME280 mySensor;
 
 WiFiServer server(80);
 
+// Write Log
+//  Debugging : Serial Log
+//  Production: log text?
+void write_log(const char* message, ...)
+{
+  char log[1024];
+  sprintf(log, message, ...);
+  Serial.println(log);
+}
+
+// setup function
 void setup()
 {
     Serial.begin(SERIAL_SPEED);
@@ -14,25 +30,68 @@ void setup()
 
     delay(10);
 
-    // We start by connecting to a WiFi network
-    Serial.println();
-    Serial.println();
-    Serial.print("Connecting to ");
-    Serial.println(MYSSID);
-
-    WiFi.begin(MYSSID, SSIDPASS);
-
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        Serial.print(".");
+    // Start by connecting to a WiFi network
+    if(setup_wifi() == false){
+      write_log("failed connecting wifi network.");
+      return;
+    }
+    
+    // Start Sensor Settings
+    if(setup_sensor_bme280() == false){
+      write_log("failed setup sensor bm280");
+      return;
     }
 
-    Serial.println("");
-    Serial.println("WiFi connected.");
-    Serial.println("IP address: ");
-    Serial.println(WiFi.localIP());
-    
     server.begin();
+}
+
+bool setup_wifi()
+{
+  write_log("Wifi Connecting to");
+  write_log(MYSSID);
+
+  WiFi.begin(MYSSID, SSIDPASS);
+
+  int count = 0;
+  while (WiFi.status() != WL_CONNECTED) {
+      delay(500);
+      write_log(".");
+      count++;
+      if(count >= 10)
+        return false;
+  }
+
+  write_log("WiFi connected.");
+  write_log("IP address: ");
+  write_log(WiFi.localIP());
+
+  return true;
+}
+
+// ==========================================
+// ==== BME280 Sensor Function ==============
+// ==========================================
+bool setup_sensor_bme280()
+{
+  if (mySensor.beginI2C() == false) //Begin communication over I2C
+  {
+    write_log("The sensor did not respond. Please check wiring.");
+    return false;
+  } 
+
+  return true;
+}
+
+// 
+bool read_sensor_bme280()
+{
+  write_log("Humidity: %f", mySensor.readFloatHumidity());
+
+  write_log(" Pressure: %f", mySensor.readFloatPressure());
+
+  write_log(" Alt: %f", mySensor.readFloatAltitudeFeet());
+
+  write_log(" Temp: %f", mySensor.readTempF());
 }
 
 int value = 0;
@@ -45,7 +104,7 @@ void loop(){
  WiFiClient client = server.available();   // listen for incoming clients
 
   if (client) {                             // if you get a client,
-    Serial.println("New Client.");           // print a message out the serial port
+    write_log("New Client.");           // print a message out the serial port
     String currentLine = "";                // make a String to hold incoming data from the client
     while (client.connected()) {            // loop while the client's connected
       if (client.available()) {             // if there's bytes to read from the client,
@@ -88,6 +147,6 @@ void loop(){
     }
     // close the connection:
     client.stop();
-    Serial.println("Client Disconnected.");
+    write_log("Client Disconnected.");
   }
 }
