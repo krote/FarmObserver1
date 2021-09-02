@@ -6,7 +6,7 @@
 #include "private_config.h"
 #include <Wire.h>
 #include <stdio.h>
-#include "lib/SparkFunBME280.h"
+#include <SparkFunBME280.h>
 
 BME280 mySensor;
 
@@ -17,9 +17,13 @@ WiFiServer server(80);
 //  Production: log text?
 void write_log(const char* message, ...)
 {
-  char log[1024];
-  sprintf(log, message, ...);
-  Serial.println(log);
+  va_list arg;
+//  char log[128];
+
+  va_start(arg, message);
+  //sprintf(log, message, arg);
+  Serial.println( printf(message,arg) );
+  va_end(arg);
 }
 
 // setup function
@@ -62,8 +66,7 @@ bool setup_wifi()
   }
 
   write_log("WiFi connected.");
-  write_log("IP address: ");
-  write_log(WiFi.localIP());
+  write_log("IP address: %s",WiFi.localIP() );
 
   return true;
 }
@@ -92,6 +95,8 @@ bool read_sensor_bme280()
   write_log(" Alt: %f", mySensor.readFloatAltitudeFeet());
 
   write_log(" Temp: %f", mySensor.readTempF());
+
+  return true;
 }
 
 int value = 0;
