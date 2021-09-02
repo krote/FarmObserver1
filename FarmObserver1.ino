@@ -18,10 +18,8 @@ WiFiServer server(80);
 void write_log(const char* message, ...)
 {
   va_list arg;
-//  char log[128];
 
   va_start(arg, message);
-  //sprintf(log, message, arg);
   Serial.println( printf(message,arg) );
   va_end(arg);
 }
@@ -30,7 +28,8 @@ void write_log(const char* message, ...)
 void setup()
 {
     Serial.begin(SERIAL_SPEED);
-    pinMode(5, OUTPUT);      // set the LED pin mode
+    pinMode(21, INPUT); // For SDA
+    pinMode(22, INPUT); // For SCL
 
     delay(10);
 
@@ -51,17 +50,16 @@ void setup()
 
 bool setup_wifi()
 {
-  write_log("Wifi Connecting to");
-  write_log(MYSSID);
+  write_log("Wifi Connecting to %s", WIFI_MYSSID);
 
-  WiFi.begin(MYSSID, SSIDPASS);
+  WiFi.begin(WIFI_MYSSID, WIFI_SSIDPASS);
 
   int count = 0;
   while (WiFi.status() != WL_CONNECTED) {
       delay(500);
       write_log(".");
       count++;
-      if(count >= 10)
+      if(count >= WIFI_RETRY_COUNT)
         return false;
   }
 
@@ -76,6 +74,9 @@ bool setup_wifi()
 // ==========================================
 bool setup_sensor_bme280()
 {
+
+  Wire.begin();
+
   if (mySensor.beginI2C() == false) //Begin communication over I2C
   {
     write_log("The sensor did not respond. Please check wiring.");
@@ -88,6 +89,9 @@ bool setup_sensor_bme280()
 // 
 bool read_sensor_bme280()
 {
+//  Serial.print("Humidity");
+//  Serial.println(mySensor.readFloatHumidity());
+/*
   write_log("Humidity: %f", mySensor.readFloatHumidity());
 
   write_log(" Pressure: %f", mySensor.readFloatPressure());
@@ -95,7 +99,21 @@ bool read_sensor_bme280()
   write_log(" Alt: %f", mySensor.readFloatAltitudeFeet());
 
   write_log(" Temp: %f", mySensor.readTempF());
+*/
+  Serial.print("Humidity: ");
+  Serial.print(mySensor.readFloatHumidity(), 0);
 
+  Serial.print(" Pressure: ");
+  Serial.print(mySensor.readFloatPressure(), 0);
+
+  Serial.print(" Alt: ");
+  //Serial.print(mySensor.readFloatAltitudeMeters(), 1);
+  Serial.print(mySensor.readFloatAltitudeFeet(), 1);
+
+  Serial.print(" Temp: ");
+  //Serial.print(mySensor.readTempC(), 2);
+  Serial.print(mySensor.readTempF(), 2);
+  Serial.println();
   return true;
 }
 
@@ -106,6 +124,9 @@ void SaveData(){
 }
 
 void loop(){
+  read_sensor_bme280();
+  delay(5000);
+  /*
  WiFiClient client = server.available();   // listen for incoming clients
 
   if (client) {                             // if you get a client,
@@ -154,4 +175,5 @@ void loop(){
     client.stop();
     write_log("Client Disconnected.");
   }
+  */
 }
