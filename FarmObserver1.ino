@@ -28,8 +28,8 @@ void write_log(const char* message, ...)
 void setup()
 {
     Serial.begin(SERIAL_SPEED);
-    pinMode(21, INPUT); // For SDA
-    pinMode(22, INPUT); // For SCL
+    //pinMode(21, INPUT); // For SDA
+    //pinMode(22, INPUT); // For SCL
 
     delay(10);
 
@@ -101,18 +101,18 @@ bool read_sensor_bme280()
   write_log(" Temp: %f", mySensor.readTempF());
 */
   Serial.print("Humidity: ");
-  Serial.print(mySensor.readFloatHumidity(), 0);
+  Serial.print(mySensor.readFloatHumidity(), 3);
 
   Serial.print(" Pressure: ");
-  Serial.print(mySensor.readFloatPressure(), 0);
+  Serial.print(mySensor.readFloatPressure(), 3);
 
   Serial.print(" Alt: ");
-  //Serial.print(mySensor.readFloatAltitudeMeters(), 1);
-  Serial.print(mySensor.readFloatAltitudeFeet(), 1);
+  Serial.print(mySensor.readFloatAltitudeMeters(), 3);
+  //Serial.print(mySensor.readFloatAltitudeFeet(), 1);
 
   Serial.print(" Temp: ");
-  //Serial.print(mySensor.readTempC(), 2);
-  Serial.print(mySensor.readTempF(), 2);
+  Serial.print(mySensor.readTempC(), 3);
+  //Serial.print(mySensor.readTempF(), 2);
   Serial.println();
   return true;
 }
