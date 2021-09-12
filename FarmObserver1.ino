@@ -6,9 +6,17 @@
 #include "private_config.h"
 #include <Wire.h>
 #include <stdio.h>
-#include <SparkFunBME280.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BME280.h>
 
-BME280 mySensor;
+#define SEALEVELPRESSURE_HPA (1013.25)
+Adafruit_BME280 bme;
+unsigned long delayTime;
+
+float ondo;
+float kiatu;
+float koudo;
+float shitudo;
 
 WiFiServer server(80);
 
@@ -28,24 +36,24 @@ void write_log(const char* message, ...)
 void setup()
 {
     Serial.begin(SERIAL_SPEED);
-    //pinMode(21, INPUT); // For SDA
-    //pinMode(22, INPUT); // For SCL
+    pinMode(21, INPUT); // For SDA
+    pinMode(22, INPUT); // For SCL
 
     delay(10);
-
+/*
     // Start by connecting to a WiFi network
     if(setup_wifi() == false){
       write_log("failed connecting wifi network.");
       return;
     }
-    
+*/    
     // Start Sensor Settings
     if(setup_sensor_bme280() == false){
       write_log("failed setup sensor bm280");
       return;
     }
 
-    server.begin();
+//    server.begin();
 }
 
 bool setup_wifi()
@@ -74,14 +82,13 @@ bool setup_wifi()
 // ==========================================
 bool setup_sensor_bme280()
 {
-
-  Wire.begin();
-
-  if (mySensor.beginI2C() == false) //Begin communication over I2C
-  {
-    write_log("The sensor did not respond. Please check wiring.");
-    return false;
-  } 
+  bool status;
+  status = bme.begin(0x76);  
+  if (!status) {
+    Serial.println("BME280 sensorが使えません");
+    while (10);
+  }
+  delayTime = 1000;
 
   return true;
 }
@@ -89,31 +96,26 @@ bool setup_sensor_bme280()
 // 
 bool read_sensor_bme280()
 {
-//  Serial.print("Humidity");
-//  Serial.println(mySensor.readFloatHumidity());
-/*
-  write_log("Humidity: %f", mySensor.readFloatHumidity());
-
-  write_log(" Pressure: %f", mySensor.readFloatPressure());
-
-  write_log(" Alt: %f", mySensor.readFloatAltitudeFeet());
-
-  write_log(" Temp: %f", mySensor.readTempF());
-*/
-  Serial.print("Humidity: ");
-  Serial.print(mySensor.readFloatHumidity(), 3);
-
-  Serial.print(" Pressure: ");
-  Serial.print(mySensor.readFloatPressure(), 3);
-
-  Serial.print(" Alt: ");
-  Serial.print(mySensor.readFloatAltitudeMeters(), 3);
-  //Serial.print(mySensor.readFloatAltitudeFeet(), 1);
-
-  Serial.print(" Temp: ");
-  Serial.print(mySensor.readTempC(), 3);
-  //Serial.print(mySensor.readTempF(), 2);
+  ondo=bme.readTemperature();
+  kiatu=bme.readPressure() / 100.0F;
+  koudo=bme.readAltitude(SEALEVELPRESSURE_HPA);
+  shitudo=bme.readHumidity();
+  Serial.print("温度 ;");
+  Serial.print(ondo);
+  Serial.println(" °C");
+   
+  Serial.print("気圧 ;");
+  Serial.print(kiatu);
+  Serial.println(" hPa");
+  Serial.print("高度 ;");
+  Serial.print(koudo);
+  Serial.println(" m");
+  Serial.print("湿度 ;");
+  Serial.print(shitudo);
+  Serial.println(" %");
   Serial.println();
+  delay(delayTime);
+  
   return true;
 }
 
